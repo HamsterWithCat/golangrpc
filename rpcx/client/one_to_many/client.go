@@ -4,14 +4,12 @@ import (
 	"context"
 	"flag"
 	"fmt"
-
 	"github.com/opentracing/opentracing-go"
 	zipkinot "github.com/openzipkin-contrib/zipkin-go-opentracing"
 	"github.com/openzipkin/zipkin-go"
 	zipkinhttp "github.com/openzipkin/zipkin-go/reporter/http"
 	"github.com/prometheus/common/log"
 	"github.com/smallnest/rpcx/client"
-
 	"rpclearn/rpcx/data_struct"
 	"rpclearn/rpcx/middle"
 )
@@ -33,6 +31,7 @@ func main(){
 	xclient := client.NewXClient("Arith",client.Failtry,client.RandomSelect,d,client.DefaultOption)
 	defer xclient.Close()
 
+	/**************************/
 	// zipkin上报
 	reporter := zipkinhttp.NewReporter("http://49.235.1.29:9411/api/v1/spans")
 	defer reporter.Close()
@@ -46,22 +45,26 @@ func main(){
 	if err != nil {
 		log.Fatalf("unable to create tracer:%+v\n",err)
 	}
-
 	tracer := zipkinot.Wrap(nativeTracer)
-
 	opentracing.SetGlobalTracer(tracer)
+    /**************************/
 
 	span,ctx,err := middle.GenerateSpanWithContext(context.Background(),"start point")
 	if err != nil {
 		fmt.Printf("failed to generate span with context,err_msg = %v\n",err)
 		return
 	}
+	span.SetTag("span.kind","client")
+	span.Finish()
+	/*span := tracer.StartSpan("oneToManyClient-Main",ext.SpanKindRPCClient)
+	ctx := opentracing.ContextWithSpan(context.Background(),span)*/
 
 	args := data_struct.ArithReq{
 		A:10,
 		B:20,
 	}
 	reply := &data_struct.ArithResp{}
+
 
 	err = xclient.Call(ctx,"Mul",args,reply)
 	if err != nil {
@@ -72,6 +75,4 @@ func main(){
 
 
 	fmt.Printf("%d * %d = %d\n",args.A,args.B,reply.C)
-
-	span.Finish()
 }

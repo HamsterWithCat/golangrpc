@@ -7,6 +7,7 @@ import (
 	"github.com/smallnest/rpcx/share"
 	"log"
 )
+
 func GenerateSpanWithContext(ctx context.Context,operationName string)(opentracing.Span,context.Context,error){
 	md := ctx.Value(share.ReqMetaDataKey)
 
@@ -35,6 +36,6 @@ func GenerateSpanWithContext(ctx context.Context,operationName string)(opentraci
 
 	_ = tracer.Inject(span.Context(),opentracing.TextMap,metadata)
 
-	ctx = context.WithValue(context.Background(),share.ReqMetaDataKey,metadata)
+	ctx = context.WithValue(context.Background(),share.ReqMetaDataKey,(map[string]string)(metadata))
 	return span,ctx,nil
 }

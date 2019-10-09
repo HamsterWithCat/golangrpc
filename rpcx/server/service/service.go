@@ -2,18 +2,27 @@ package service
 
 import (
 	"context"
-	"fmt"
+	"errors"
+	"github.com/opentracing/opentracing-go"
 	. "rpclearn/rpcx/data_struct"
-	"rpclearn/rpcx/middle"
 )
 
 type Arith int
 
 func (t *Arith)Mul(ctx context.Context,args *ArithReq,reply *ArithResp) error {
+	/*fmt.Printf("ctx:%v\n",ctx)
 	span,ctx,_ := middle.GenerateSpanWithContext(ctx,"Arith-Mul")
-	span.SetTag("method","Mul")
+	span.SetTag("http.method","Mul")
+	span.SetTag("span.kind","server")
 	span.LogKV("step","rpcx")
-	fmt.Printf("span:%v\n",span)
+	defer span.Finish()*/
+	span := opentracing.SpanFromContext(ctx)
+	if nil == span {
+		return errors.New("span is nil")
+	}
+	span.SetTag("http.method","Mul")
+	span.SetTag("span.kind","server")
+	span.LogKV("step","rpcx")
 	defer span.Finish()
 
 	reply.C = args.A * args.B
