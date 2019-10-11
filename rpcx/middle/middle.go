@@ -8,7 +8,7 @@ import (
 	"log"
 )
 
-func GenerateSpanWithContext(ctx context.Context,operationName string)(opentracing.Span,context.Context,error){
+func GenerateSpanWithContext(ctx context.Context, operationName string) (opentracing.Span, context.Context, error) {
 	md := ctx.Value(share.ReqMetaDataKey)
 
 	var span opentracing.Span
@@ -18,24 +18,24 @@ func GenerateSpanWithContext(ctx context.Context,operationName string)(opentraci
 
 	if md != nil {
 		carrier := opentracing.TextMapCarrier(md.(map[string]string))
-		spanContext ,err := tracer.Extract(opentracing.TextMap,carrier)
-		if err != nil && err != opentracing.ErrSpanContextNotFound{
-			log.Printf("metadata error %s\n",err)
+		spanContext, err := tracer.Extract(opentracing.TextMap, carrier)
+		if err != nil && err != opentracing.ErrSpanContextNotFound {
+			log.Printf("metadata error %s\n", err)
 		} else {
-			parentSpan = tracer.StartSpan(operationName,ext.RPCServerOption(spanContext))
+			parentSpan = tracer.StartSpan(operationName, ext.RPCServerOption(spanContext))
 		}
 	}
 
 	if parentSpan != nil {
-		span = tracer.StartSpan(operationName,opentracing.ChildOf(parentSpan.Context()))
+		span = tracer.StartSpan(operationName, opentracing.ChildOf(parentSpan.Context()))
 	} else {
 		span = opentracing.StartSpan(operationName)
 	}
 
 	metadata := opentracing.TextMapCarrier(make(map[string]string))
 
-	_ = tracer.Inject(span.Context(),opentracing.TextMap,metadata)
+	_ = tracer.Inject(span.Context(), opentracing.TextMap, metadata)
 
-	ctx = context.WithValue(context.Background(),share.ReqMetaDataKey,(map[string]string)(metadata))
-	return span,ctx,nil
+	ctx = context.WithValue(context.Background(), share.ReqMetaDataKey, (map[string]string)(metadata))
+	return span, ctx, nil
 }
